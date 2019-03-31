@@ -1,9 +1,10 @@
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
 #include <ESP8266WebServer.h>
+#include <ESP8266HTTPClient.h>
 
 #include "page_index.h"
-#include "json_templates.h"
+#include "api_index.h"
 
 #define SERIAL_PORT 115200
 
@@ -15,6 +16,7 @@ int _relayPin = 13;
 int _pinValue = LOW;
 
 ESP8266WebServer server(80);
+HTTPClient http;
 
 int writePin(int value)
 {
@@ -47,11 +49,30 @@ void handleOff()
 
 void handleSwitch()
 {
-  // host/switch?to=1|0
+  // /switch?to=1|0
   int to = server.arg("to").toInt();
   int pinValue = to == 0 ? LOW : HIGH;
   pinValue = writePin(pinValue);
-  responseApi(json_response_switch.replace(var_pin_value, pinValue));
+  String switchResponse = json_response_switch;
+  switchResponse.replace(key_pin_value, String(pinValue));
+  responseApi(json_response_switch);
+}
+
+void registerDevice(String macAddress)
+{
+  macAddress.replace(":", "");
+  String deviceId = "opclient_" + macAddress;
+
+  http.begin(api_ophost_register);
+  int httpCode = http.GET();
+
+  if (httpCode > 0)
+  {
+    String payload = http.getString();
+    Serial.println(payload);
+  }
+
+  http.end();
 }
 
 void setup(void)
