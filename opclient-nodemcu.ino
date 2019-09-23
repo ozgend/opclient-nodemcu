@@ -4,12 +4,14 @@
 #include <ESP8266HTTPClient.h>
 
 #include "page_index.h"
-#include "api_index.h"
 
 #define SERIAL_PORT 115200
 
-String _ssid = "SSID";
-String _password = "PASSWORD";
+String _ssid = "OPHOST";
+String _password = "ophost@lok!";
+
+// String _ssid = "Cyberdyne";
+// String _password = "de@dline201!x";
 
 // relay pin to control - wire relay for COM+NO
 int _relayPin = 13;
@@ -51,28 +53,11 @@ void handleSwitch()
 {
   // /switch?to=1|0
   int to = server.arg("to").toInt();
-  int pinValue = to == 0 ? LOW : HIGH;
+  int pinValue = to == 0 ? HIGH : LOW;
   pinValue = writePin(pinValue);
-  String switchResponse = json_response_switch;
-  switchResponse.replace(key_pin_value, String(pinValue));
-  responseApi(json_response_switch);
-}
-
-void registerDevice(String macAddress)
-{
-  macAddress.replace(":", "");
-  String deviceId = "opclient_" + macAddress;
-
-  http.begin(api_ophost_register);
-  int httpCode = http.GET();
-
-  if (httpCode > 0)
-  {
-    String payload = http.getString();
-    Serial.println(payload);
-  }
-
-  http.end();
+  String switchResponse = "{ \"pinValue\": $PIN_VALUE$ }";
+  switchResponse.replace("$PIN_VALUE$", String(pinValue));
+  responseApi(switchResponse);
 }
 
 void setup(void)
